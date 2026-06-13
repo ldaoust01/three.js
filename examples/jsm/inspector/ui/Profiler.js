@@ -1,5 +1,6 @@
 import { EventDispatcher } from 'three';
 import { Style } from './Style.js';
+import { Graph } from './Graph.js';
 import { getItem, setItem } from '../Inspector.js';
 
 export class Profiler extends EventDispatcher {
@@ -250,6 +251,10 @@ export class Profiler extends EventDispatcher {
 </span>
 <span class="toggle-icon">
 	<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-device-ipad-horizontal-search"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.5 20h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v5.5" /><path d="M9 17h2" /><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M20.2 20.2l1.8 1.8" /></svg>
+	<span class="console-badge-container">
+		<span class="console-badge error" style="display: none;">0</span>
+		<span class="console-badge warn" style="display: none;">0</span>
+	</span>
 </span>
 `;
 		this.toggleButton.onclick = () => this.togglePanel();
@@ -337,6 +342,12 @@ export class Profiler extends EventDispatcher {
 			this.miniPanel.classList.add( 'position-right' );
 
 		}
+
+		// Create a background performance graph for the toggle button
+		this.toggleGraph = new Graph( 80 );
+		this.toggleGraph.addLine( 'fps', '#4c4c6bff' );
+		this.toggleGraph.domElement.className = 'profiler-toggle-graph';
+		this.toggleButton.appendChild( this.toggleGraph.domElement );
 
 	}
 
@@ -431,6 +442,7 @@ export class Profiler extends EventDispatcher {
 		if ( this.panel.classList.contains( 'maximized' ) ) {
 
 			this.panel.classList.remove( 'maximized' );
+			this.domElement.classList.remove( 'maximized' );
 
 			// Restore size based on current position
 			if ( this.position === 'bottom' ) {
@@ -461,6 +473,7 @@ export class Profiler extends EventDispatcher {
 			}
 
 			this.panel.classList.add( 'maximized' );
+			this.domElement.classList.add( 'maximized' );
 
 			// Maximize based on current position
 			if ( this.position === 'bottom' ) {
@@ -753,6 +766,7 @@ export class Profiler extends EventDispatcher {
 			if ( this.panel.classList.contains( 'maximized' ) ) {
 
 				this.panel.classList.remove( 'maximized' );
+				this.domElement.classList.remove( 'maximized' );
 				this.maximizeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
 
 			}
@@ -1565,8 +1579,8 @@ export class Profiler extends EventDispatcher {
 
 			}
 
-			// Count only non-detached tabs that come before this one
-			if ( ! t.isDetached ) {
+			// Count only non-detached, non-builtin tabs that come before this one
+			if ( ! t.isDetached && ! t.builtin ) {
 
 				insertIndex ++;
 
@@ -1625,6 +1639,12 @@ export class Profiler extends EventDispatcher {
 		this.miniPanel.classList.toggle( 'panel-open' );
 
 		const isVisible = this.panel.classList.contains( 'visible' );
+
+		if ( isVisible && this.activeTabId && this.tabs[ this.activeTabId ] ) {
+
+			this.tabs[ this.activeTabId ].setActive( true );
+
+		}
 
 		this.detachedWindows.forEach( detachedWindow => {
 

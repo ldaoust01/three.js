@@ -79,7 +79,7 @@ class ClusteredLightsNode extends LightsNode {
 
 	customCacheKey() {
 
-		return this._compute.getCacheKey() + super.customCacheKey();
+		return ( this._compute ? this._compute.getCacheKey() : 0 ) + super.customCacheKey();
 
 	}
 
@@ -212,7 +212,7 @@ class ClusteredLightsNode extends LightsNode {
 
 		for ( const light of lights ) {
 
-			if ( light.isPointLight === true ) {
+			if ( light.isPointLight === true && light.castShadow !== true ) {
 
 				clusteredLights[ clusteredIndex ++ ] = light;
 
